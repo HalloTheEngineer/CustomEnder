@@ -1,0 +1,9 @@
+{
+  "title": "Custom Ender",
+  "settings": "Settings",
+  "settings.active": "Active",
+  "settings.spawnPercentage": "Spawn-with-block percentage",
+  "settings.openConfig": "Open Config",
+
+  "settings.tooltip.openConfig": "Open config file"
+}

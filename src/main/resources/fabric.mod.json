@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "customender",
+  "version": "${version}",
+  "name": "CustomEnder",
+  "description": "A requested mod to enhance enderman block interactions",
+  "authors": [
+    "hallotheengineer"
+  ],
+  "contact": {
+    "discord": "hallotheengineer"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "de.hallotheengineer.customender.CustomEnder"
+    ],
+    "modmenu": [
+      "de.hallotheengineer.customender.config.ModMenuEntry"
+    ]
+  },
+  "mixins": [
+    "customender.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}"
+  }
+}
