@@ -26,7 +26,7 @@ public abstract class EndermanMixin extends MobEntity {
     @Inject(method = "initGoals", at = @At("TAIL"))
     private void initPlace(CallbackInfo ci) {
 
-        if (!Config.get().active) return;
+        if (!de.hallotheengineer.customender.config.Config.get().active) return;
 
         EndermanEntity enderman = (EndermanEntity) (Object) this;
 
