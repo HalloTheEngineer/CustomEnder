@@ -30,7 +30,7 @@ public abstract class EndermanMixin extends MobEntity {
 
         EndermanEntity enderman = (EndermanEntity) (Object) this;
 
-        if (!(enderman.getWorld() instanceof ServerWorld)) return;
+        if (!(enderman.getEntityWorld() instanceof ServerWorld)) return;
 
         GoalSelector goalSelector = ((MobEntityAccessor) enderman).getGoalSelector();
 

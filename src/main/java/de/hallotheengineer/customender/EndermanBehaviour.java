@@ -51,7 +51,7 @@ public class EndermanBehaviour {
         @Override
         public void tick() {
             net.minecraft.util.math.random.Random random = this.enderman.getRandom();
-            World world = this.enderman.getWorld();
+            World world = this.enderman.getEntityWorld();
             int i = MathHelper.floor(this.enderman.getX() - 1.0 + random.nextDouble() * 2.0);
             int j = MathHelper.floor(this.enderman.getY() + random.nextDouble() * 2.0);
             int k = MathHelper.floor(this.enderman.getZ() - 1.0 + random.nextDouble() * 2.0);
