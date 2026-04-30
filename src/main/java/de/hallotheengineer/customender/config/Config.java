@@ -3,15 +3,14 @@ package de.hallotheengineer.customender.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryKey;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Blocks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 public class Config {
@@ -82,9 +81,6 @@ public class Config {
                 Blocks.MELON,
                 Blocks.CRIMSON_NYLIUM,
                 Blocks.WARPED_NYLIUM
-        ).map(block -> {
-            Optional<RegistryKey<Block>> o = block.getRegistryEntry().getKey();
-            return o.map(blockRegistryKey -> blockRegistryKey.getValue().toString()).orElse("minecraft:air");
-        }).toList();
+        ).map(BuiltInRegistries.BLOCK::getKey).map(Identifier::toString).toList();
     }
 }

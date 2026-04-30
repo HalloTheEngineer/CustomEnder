@@ -3,12 +3,12 @@ package de.hallotheengineer.customender.config;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.resources.Identifier;
 
 public class ConfigScreen {
     private static final Config config = Config.get();
@@ -18,23 +18,23 @@ public class ConfigScreen {
 
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
-                .setTitle(Text.translatable("title"))
-                .setDefaultBackgroundTexture(Identifier.of("minecraft:textures/block/blackstone.png"))
+                .setTitle(Component.translatable("title"))
+                .setDefaultBackgroundTexture(Identifier.parse("minecraft:textures/block/blackstone.png"))
                 .setTransparentBackground(true);
         ConfigEntryBuilder eb = builder.entryBuilder();
 
         //=============================CONFIG========================
-        ConfigCategory settings = builder.getOrCreateCategory(Text.translatable("settings"));
+        ConfigCategory settings = builder.getOrCreateCategory(Component.translatable("settings"));
 
-        settings.addEntry(eb.startBooleanToggle(Text.translatable("settings.active"), config.active)
+        settings.addEntry(eb.startBooleanToggle(Component.translatable("settings.active"), config.active)
                 .setSaveConsumer(val -> config.active = val)
                 .build());
-        settings.addEntry(eb.startFloatField(Text.translatable("settings.spawnPercentage"), config.spawnPercentage)
+        settings.addEntry(eb.startFloatField(Component.translatable("settings.spawnPercentage"), config.spawnPercentage)
                 .setSaveConsumer(val -> config.spawnPercentage = val)
                 .build());
 
-        settings.addEntry(eb.startTextDescription(Text.translatable("settings.openConfig")
-                .styled(style -> style.withClickEvent(new ClickEvent.OpenFile(Config.FILE)).withHoverEvent(new HoverEvent.ShowText(Text.translatable("settings.tooltip.openConfig"))).withColor(Formatting.YELLOW)))
+        settings.addEntry(eb.startTextDescription(Component.translatable("settings.openConfig")
+                .withStyle(style -> style.withClickEvent(new ClickEvent.OpenFile(Config.FILE)).withHoverEvent(new HoverEvent.ShowText(Component.translatable("settings.tooltip.openConfig"))).withColor(ChatFormatting.YELLOW)))
                 .build());
 
         builder.setSavingRunnable(Config::save);

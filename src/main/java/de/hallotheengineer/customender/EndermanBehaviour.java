@@ -1,27 +1,27 @@
 package de.hallotheengineer.customender;
 
 import de.hallotheengineer.customender.config.Config;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.mob.EndermanEntity;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
-import net.minecraft.world.rule.GameRules;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 import java.util.Random;
 
 public class EndermanBehaviour {
-
 
     private static final Random random = new Random();
 
@@ -29,55 +29,71 @@ public class EndermanBehaviour {
         List<String> bl = Config.get().blocks;
         if (bl.isEmpty() || random.nextFloat(100) >= Math.min(Config.get().spawnPercentage, 100))
             return null;
+
         Identifier i = Identifier.tryParse(bl.get(random.nextInt(bl.size())));
         if (i == null) return null;
-        return Registries.BLOCK.get(i);
+        return BuiltInRegistries.BLOCK.get(i).orElseThrow().value();
     }
 
     public static class PlaceBlockGoal extends Goal {
-        private final EndermanEntity enderman;
+        private final EnderMan enderman;
 
-        public PlaceBlockGoal(EndermanEntity enderman) {
+        public PlaceBlockGoal(EnderMan enderman) {
             this.enderman = enderman;
         }
 
+        /**
+         * Converts the base tick value into a value adjusted for the server's tick rate
+         * and difficulty, matching the standard Minecraft AI behavior.
+         */
+        protected int toGoalTicks(int ticks) {
+            return reducedTickDelay(ticks);
+        }
+
+        private ServerLevel getServerLevel(EnderMan enderman) {
+            return (ServerLevel) enderman.level();
+        }
+
         @Override
-        public boolean canStart() {
-            if (this.enderman.getCarriedBlock() == null) return false;
-            else return getServerWorld(this.enderman).getGameRules().getValue(GameRules.DO_MOB_GRIEFING)
-                    && this.enderman.getRandom().nextInt(toGoalTicks(2000)) == 0;
+        public boolean canUse() {
+            if (this.enderman.getCarriedBlock() == null) {
+                return false;
+            } else if (!getServerLevel(this.enderman).getGameRules().get(GameRules.MOB_GRIEFING)) {
+                return false;
+            } else {
+                return this.enderman.getRandom().nextInt(this.toGoalTicks(2000)) == 0;
+            }
         }
 
         @Override
         public void tick() {
-            net.minecraft.util.math.random.Random random = this.enderman.getRandom();
-            World world = this.enderman.getEntityWorld();
-            int i = MathHelper.floor(this.enderman.getX() - 1.0 + random.nextDouble() * 2.0);
-            int j = MathHelper.floor(this.enderman.getY() + random.nextDouble() * 2.0);
-            int k = MathHelper.floor(this.enderman.getZ() - 1.0 + random.nextDouble() * 2.0);
+            RandomSource random = this.enderman.getRandom();
+            Level world = this.enderman.level();
+            int i = (int) Math.floor(this.enderman.getX() - 1.0 + random.nextDouble() * 2.0);
+            int j = (int) Math.floor(this.enderman.getY() + random.nextDouble() * 2.0);
+            int k = (int) Math.floor(this.enderman.getZ() - 1.0 + random.nextDouble() * 2.0);
             BlockPos blockPos = new BlockPos(i, j, k);
             BlockState blockState = world.getBlockState(blockPos);
-            BlockPos blockPos2 = blockPos.down();
-            BlockState blockState2 = world.getBlockState(blockPos2);
-            BlockState blockState3 = this.enderman.getCarriedBlock();
-            if (blockState3 != null) {
-                //blockState3 = Block.postProcessState(blockState3, this.enderman.getWorld(), blockPos);
-                if (this.canPlaceOn(world, blockPos, blockState3, blockState, blockState2, blockPos2)) {
-                    world.setBlockState(blockPos, blockState3, Block.NOTIFY_ALL);
-                    world.emitGameEvent(GameEvent.BLOCK_PLACE, blockPos, GameEvent.Emitter.of(this.enderman, blockState3));
+            BlockPos blockPosBelow = blockPos.below();
+            BlockState blockStateBelow = world.getBlockState(blockPosBelow);
+            BlockState carriedState = this.enderman.getCarriedBlock();
+
+            if (carriedState != null) {
+                if (this.canPlaceOn(world, blockPos, carriedState, blockState, blockStateBelow, blockPosBelow)) {
+                    world.setBlock(blockPos, carriedState, Block.UPDATE_ALL);
+                    world.gameEvent(GameEvent.BLOCK_PLACE, blockPos, GameEvent.Context.of(this.enderman, carriedState));
                     this.enderman.setCarriedBlock(null);
                 }
             }
         }
 
-        private boolean canPlaceOn(World world, BlockPos posAbove, BlockState carriedState, BlockState state, BlockState stateBelow, BlockPos pos) {
+        private boolean canPlaceOn(Level world, BlockPos posAbove, BlockState carriedState, BlockState state, BlockState stateBelow, BlockPos pos) {
             return state.isAir()
-                    && (stateBelow.isIn(BlockTags.BASE_STONE_OVERWORLD))
+                    && (stateBelow.is(BlockTags.BASE_STONE_OVERWORLD))
                     && !stateBelow.isAir()
-                    && !stateBelow.isOf(Blocks.BEDROCK)
-                    && stateBelow.isFullCube(world, pos)
-                    // && carriedState.canPlaceAt(world, posAbove)
-                    && world.getOtherEntities(this.enderman, Box.from(Vec3d.of(posAbove))).isEmpty();
+                    && !stateBelow.is(Blocks.BEDROCK)
+                    && stateBelow.isCollisionShapeFullBlock(world, pos)
+                    && world.getEntities(this.enderman, AABB.ofSize(new Vec3(posAbove.getX() + 0.5, posAbove.getY() + 0.5, posAbove.getZ() + 0.5), 1, 1, 1)).isEmpty();
         }
     }
 }
