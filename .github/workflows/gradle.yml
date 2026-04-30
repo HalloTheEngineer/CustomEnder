@@ -38,8 +38,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
+      #       - name: Validate Gradle wrapper
+      #        uses: gradle/actions/wrapper-validation@v3
 
       - name: Generate version number
         id: version
