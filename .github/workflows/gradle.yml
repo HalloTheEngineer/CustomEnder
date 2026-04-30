@@ -31,7 +31,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4 # v4.0.0
+        uses: gradle/actions/setup-gradle@v4
         with:
           cache-cleanup: on-success
 
@@ -62,7 +62,7 @@ jobs:
           if [ -f gradle.properties ]; then
             sed -i "s/mod_version=.*/mod_version=${{ steps.version.outputs.version }}/" gradle.properties
           fi
-          # You can also update fabric.mod.json if needed
+          # Update version in fabric.mod.json
           if [ -f src/main/resources/fabric.mod.json ]; then
             sed -i "s/\"version\": \".*\"/\"version\": \"${{ steps.version.outputs.version }}\"/" src/main/resources/fabric.mod.json
           fi
@@ -70,7 +70,7 @@ jobs:
       - name: Build with Gradle
         id: build
         run: |
-          ./gradlew remapJar --no-daemon --stacktrace --info
+          ./gradlew jar --no-daemon --stacktrace --info
           # Find the built jar file
           JAR_FILE=$(find build/libs -name "*.jar" -not -name "*-sources.jar" -not -name "*-dev.jar" | head -1)
           if [ -z "$JAR_FILE" ]; then
@@ -107,7 +107,6 @@ jobs:
       - name: Read mod info
         id: mod-info
         run: |
-          # Extract mod name and description from fabric.mod.json
           if [ -f src/main/resources/fabric.mod.json ]; then
             MOD_NAME=$(grep -o '"name": "[^"]*' src/main/resources/fabric.mod.json | cut -d'"' -f4)
             MOD_DESC=$(grep -o '"description": "[^"]*' src/main/resources/fabric.mod.json | cut -d'"' -f4)
@@ -121,10 +120,8 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          # Generate a simple changelog from recent commits
           echo "## Changes" > CHANGELOG.md
           if [[ $GITHUB_REF == refs/tags/* ]]; then
-            # For tagged releases, get commits since last tag
             LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
             if [ -n "$LAST_TAG" ]; then
               git log --pretty=format:"- %s" $LAST_TAG..HEAD >> CHANGELOG.md
@@ -132,7 +129,6 @@ jobs:
               git log --pretty=format:"- %s" -10 >> CHANGELOG.md
             fi
           else
-            # For main branch, get last 10 commits
             git log --pretty=format:"- %s" -10 >> CHANGELOG.md
           fi
           echo "" >> CHANGELOG.md

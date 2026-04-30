@@ -7,9 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.EnderMan;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,11 +24,13 @@ import java.util.function.Consumer;
 public class EntityTypeMixin<T extends Entity> {
 
     @Unique
+    @Deprecated
     private static final List<EntitySpawnReason> spawnReasons = Arrays.asList(
             EntitySpawnReason.NATURAL,
             EntitySpawnReason.MOB_SUMMONED,
             EntitySpawnReason.SPAWN_ITEM_USE
     );
+
     @Inject(method = "spawn(Lnet/minecraft/server/level/ServerLevel;Ljava/util/function/Consumer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/EntitySpawnReason;ZZ)Lnet/minecraft/world/entity/Entity;", at = @At("RETURN"))
     private void initialize(ServerLevel level, @Nullable Consumer<T> postSpawnConfig, BlockPos spawnPos, EntitySpawnReason spawnReason, boolean tryMoveDown, boolean movedUp, CallbackInfoReturnable<T> cir) {
         if (!Config.get().active) return;
